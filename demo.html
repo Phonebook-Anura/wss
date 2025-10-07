@@ -3,102 +3,121 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Registro SIP Anura - WSS (versión estable)</title>
-  <link rel="icon" href="https://anura.pe/wp-content/uploads/2015/11/logo-anura-300-tr.png" />
+  <title>Click2Call Anura - Registro SIP</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f7f7f7;
-      padding: 40px;
+      background: #f7f8fa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
     }
-    form {
+
+    .card {
       background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      width: 400px;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+      width: 320px;
     }
-    input, button {
+
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+
+    input {
       width: 100%;
-      margin-top: 10px;
       padding: 10px;
-      border-radius: 6px;
+      margin: 8px 0;
       border: 1px solid #ccc;
-      font-size: 14px;
+      border-radius: 8px;
     }
+
     button {
-      background-color: #006ad1;
+      width: 100%;
+      background: #007bff;
       color: white;
       border: none;
+      padding: 10px;
+      border-radius: 8px;
       cursor: pointer;
-      transition: 0.2s;
     }
+
     button:hover {
-      background-color: #0056a3;
+      background: #0056b3;
     }
-    #status {
-      margin-top: 20px;
-      font-weight: bold;
+
+    .error {
+      color: red;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .success {
+      color: green;
+      text-align: center;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-  <h2>Registro SIP - Anura</h2>
-
-  <form id="sipForm">
+  <div class="card">
+    <h2>Registrar cuenta SIP</h2>
     <label>Extensión SIP:</label>
-    <input type="text" id="user" placeholder="Ej: 1001" required>
+    <input id="user" type="text" placeholder="Ej: 1040" />
     <label>Contraseña SIP:</label>
-    <input type="password" id="password" required>
-    <button type="submit">Registrar cuenta</button>
-  </form>
+    <input id="password" type="password" placeholder="Contraseña" />
+    <button id="registerBtn">Registrar cuenta</button>
+    <div id="status"></div>
+  </div>
 
-  <div id="status"></div>
+  <!-- ✅ Script principal con SIP.js -->
+  <script type="module">
+    import * as SIP from "https://unpkg.com/sip.js@0.21.0/dist/sip.js";
 
-  <!-- ✅ Carga estable de SIP.js -->
-  <script src="https://cdn.jsdelivr.net/npm/sip.js@0.15.10/dist/sip.min.js"></script>
+    const btn = document.getElementById("registerBtn");
+    const status = document.getElementById("status");
 
-  <script>
-    console.log("SIP.js cargado correctamente", SIP);
+    btn.addEventListener("click", async () => {
+      const user = document.getElementById("user").value.trim();
+      const password = document.getElementById("password").value.trim();
 
-    const form = document.getElementById("sipForm");
-    const statusEl = document.getElementById("status");
+      if (!user || !password) {
+        status.textContent = "⚠️ Completa todos los campos.";
+        status.className = "error";
+        return;
+      }
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const user = document.getElementById("user").value;
-      const password = document.getElementById("password").value;
-      const domain = "anura.empresas.anura.pe:55090";
+      // 🔹 Configuración correcta para ANURA
+      const domain = "anura.empresas.anura.pe";
       const wssServer = "wss://sipwss.anura.pe";
+      const uri = `sip:${user}@${domain}`;
 
-      statusEl.textContent = "Conectando al servidor Anura...";
+      status.textContent = "Conectando...";
+      status.className = "";
 
       try {
-        const uri = `sip:${user}@${domain}`;
-
         const ua = new SIP.UA({
-          uri,
-          wsServers: [wssServer],
+          uri: uri,
+          transportOptions: {
+            wsServers: [wssServer],
+          },
           authorizationUser: user,
           password: password,
-          traceSip: true
+          displayName: user,
+          realm: domain,
+          register: true,
+          traceSip: true,
         });
 
-        ua.on('registered', () => {
-          statusEl.textContent = "✅ Registro exitoso en Anura PBX";
+        ua.on("registered", () => {
+          status.textContent = "✅ Registrado correctamente";
+          status.className = "success";
         });
 
-        ua.on('registrationFailed', (err) => {
-          console.error(err);
-          statusEl.textContent = "❌ Error al registrar: " + err.cause;
-        });
-
-      } catch (error) {
-        console.error("Error general:", error);
-        statusEl.textContent = "⚠️ Error al intentar conectar: " + error.message;
-      }
-    });
-  </script>
-</body>
-</html>
+        ua.on("registrationFailed", (error) => {
+          console.error("❌ Error al registrar:", error);
+          status.textContent = `❌ Error al registrar: ${error
++
