@@ -55,7 +55,7 @@
 
   <div id="status"></div>
 
-  <!-- ✅ Versión funcional UMD (no modular) -->
+  <!-- ✅ Carga estable de SIP.js -->
   <script src="https://cdn.jsdelivr.net/npm/sip.js@0.15.10/dist/sip.min.js"></script>
 
   <script>
@@ -89,9 +89,14 @@
           statusEl.textContent = "✅ Registro exitoso en Anura PBX";
         });
 
-        ua.on('registrationFailed', (e) => {
-          console.error(e);
-          statusEl.textContent = "❌ Error al registrar: " + err.message;
+        ua.on('registrationFailed', (err) => {
+          console.error(err);
+          statusEl.textContent = "❌ Error al registrar: " + err.cause;
+        });
+
+      } catch (error) {
+        console.error("Error general:", error);
+        statusEl.textContent = "⚠️ Error al intentar conectar: " + error.message;
       }
     });
   </script>
