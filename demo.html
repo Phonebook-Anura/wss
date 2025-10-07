@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Click2Call Anura - Registro SIP</title>
-   <link rel="icon" href="https://anura.pe/wp-content/uploads/2015/11/logo-anura-300-tr.png" />
+  <title>Registro SIP - Anura</title>
+  <link rel="icon" href="https://anura.pe/wp-content/uploads/2015/11/logo-anura-300-tr.png" />
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f7f8fa;
+      background: #f5f7fa;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -18,14 +18,19 @@
     .card {
       background: white;
       padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-      width: 320px;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+      width: 340px;
     }
 
     h2 {
       text-align: center;
       color: #333;
+    }
+
+    label {
+      font-weight: bold;
+      font-size: 0.9rem;
     }
 
     input {
@@ -34,6 +39,7 @@
       margin: 8px 0;
       border: 1px solid #ccc;
       border-radius: 8px;
+      background: #fff8d5;
     }
 
     button {
@@ -50,33 +56,39 @@
       background: #0056b3;
     }
 
-    .error {
-      color: red;
+    .status {
       text-align: center;
       margin-top: 10px;
+      font-weight: bold;
+    }
+
+    .error {
+      color: red;
     }
 
     .success {
       color: green;
-      text-align: center;
-      margin-top: 10px;
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <h2>Registrar cuenta SIP</h2>
-    <label>Extensión SIP:</label>
+    <h2>Registro SIP - Anura</h2>
+    <label for="user">Extensión SIP:</label>
     <input id="user" type="text" placeholder="Ej: 1040" />
-    <label>Contraseña SIP:</label>
+    <label for="password">Contraseña SIP:</label>
     <input id="password" type="password" placeholder="Contraseña" />
     <button id="registerBtn">Registrar cuenta</button>
-    <div id="status"></div>
+    <div id="status" class="status"></div>
   </div>
 
-  <!-- ✅ Script principal con SIP.js -->
   <script type="module">
-    import * as SIP from "https://unpkg.com/sip.js@0.21.0/dist/sip.js";
+    import {
+      UserAgent,
+      Registerer,
+      WebSocketTransport,
+      UserAgentOptions
+    } from "https://cdn.jsdelivr.net/npm/sip.js@0.21.2/dist/sip.js";
 
     const btn = document.getElementById("registerBtn");
     const status = document.getElementById("status");
@@ -87,38 +99,55 @@
 
       if (!user || !password) {
         status.textContent = "⚠️ Completa todos los campos.";
-        status.className = "error";
+        status.className = "status error";
         return;
       }
 
-      // 🔹 Configuración correcta para ANURA
+      const server = "wss://sipwss.anura.pe";
       const domain = "anura.empresas.anura.pe";
-      const wssServer = "wss://sipwss.anura.pe";
       const uri = `sip:${user}@${domain}`;
 
-      status.textContent = "Conectando...";
-      status.className = "";
+      status.textContent = "⏳ Conectando...";
+      status.className = "status";
 
       try {
-        const ua = new SIP.UA({
-          uri: uri,
-          transportOptions: {
-            wsServers: [wssServer],
-          },
-          authorizationUser: user,
-          password: password,
+        // Crear transporte WebSocket
+        const transport = new WebSocketTransport({ server });
+
+        // Crear agente SIP
+        const userAgent = new UserAgent({
+          uri,
+          transport,
+          authorizationUsername: user,
+          authorizationPassword: password,
           displayName: user,
-          realm: domain,
-          register: true,
-          traceSip: true,
+          contactUri: uri,
         });
 
-        ua.on("registered", () => {
-          status.textContent = "✅ Registrado correctamente";
-          status.className = "success";
-        });
+        // Crear registrador
+        const registerer = new Registerer(userAgent);
 
-        ua.on("registrationFailed", (error) => {
-          console.error("❌ Error al registrar:", error);
-          status.textContent = `❌ Error al registrar: ${error
-+
+        // Monitorear estado
+        userAgent.delegate = {
+          onConnect: () => console.log("✅ Conectado a WebSocket SIP"),
+          onDisconnect: (error) => console.warn("🔌 Desconectado:", error),
+        };
+
+        // Iniciar el agente
+        await userAgent.start();
+
+        console.log("📞 Intentando registro SIP...");
+        await registerer.register();
+
+        status.textContent = "✅ Registrado correctamente";
+        status.className = "status success";
+
+      } catch (error) {
+        console.error("❌ Error al registrar:", error);
+        status.textContent = "❌ Error al registrar. Ver consola.";
+        status.className = "status error";
+      }
+    });
+  </script>
+</body>
+</html>
