@@ -91,4 +91,9 @@
 
         ua.on('registrationFailed', (e) => {
           console.error(e);
-          statusEl.textContent = "❌
+          statusEl.textContent = "❌ Error al registrar: " + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
