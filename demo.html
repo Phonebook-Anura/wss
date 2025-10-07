@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Registro SIP Anura - WSS (versión moderna)</title>
+  <title>Registro SIP Anura - WSS (versión estable)</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -54,11 +54,12 @@
 
   <div id="status"></div>
 
-  <!-- 🔹 Aquí empieza el módulo JS -->
-  <script type="module">
-        import * as SIP from "https://cdn.jsdelivr.net/npm/sip.js@0.21.2/dist/sip.umd.js";
-    
+  <!-- ✅ Versión funcional UMD (no modular) -->
+  <script src="https://cdn.jsdelivr.net/npm/sip.js@0.15.10/dist/sip.min.js"></script>
+
+  <script>
     console.log("SIP.js cargado correctamente", SIP);
+
     const form = document.getElementById("sipForm");
     const statusEl = document.getElementById("status");
 
@@ -75,26 +76,18 @@
       try {
         const uri = `sip:${user}@${domain}`;
 
-        const userAgent = new SIP.UserAgent({
+        const ua = new SIP.UA({
           uri,
-          authorizationUsername: user,
-          authorizationPassword: password,
-          transportOptions: { server: wssServer },
-          userAgentString: "Anura-WebClient/1.0"
+          wsServers: [wssServer],
+          authorizationUser: user,
+          password: password,
+          traceSip: true
         });
 
-        await userAgent.start();
+        ua.on('registered', () => {
+          statusEl.textContent = "✅ Registro exitoso en Anura PBX";
+        });
 
-        const registerer = new SIP.Registerer(userAgent);
-        await registerer.register();
-
-        statusEl.textContent = "✅ Registro exitoso en Anura PBX";
-      } catch (err) {
-        console.error(err);
-        statusEl.textContent = "❌ Error al registrar: " + err.message;
-      }
-    });
-  </script>
-  <!-- 🔹 Aquí termina el módulo JS -->
-</body>
-</html>
+        ua.on('registrationFailed', (e) => {
+          console.error(e);
+          statusEl.textContent = "❌
