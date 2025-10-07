@@ -58,7 +58,7 @@
      */
     function registerSIP(user, password, opts = {}) {
       const timeoutMs = opts.timeout || 15000;
-      const domain = opts.domain || 'anura.empresas.anura.pe'; // sin puerto
+      const domain = opts.domain || 'anura.empresas.anura.pe:55090'; // sin puerto
       const wssServer = opts.wss || 'wss://sipwss.anura.pe';
 
       return new Promise((resolve, reject) => {
