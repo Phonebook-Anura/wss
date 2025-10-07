@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registro SIP Anura - WSS (versión moderna)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      padding: 40px;
+    }
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      width: 400px;
+    }
+    input, button {
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+    button {
+      background-color: #006ad1;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    button:hover {
+      background-color: #0056a3;
+    }
+    #status {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2>Registro SIP - Anura</h2>
+
+  <form id="sipForm">
+    <label>Extensión SIP:</label>
+    <input type="text" id="user" placeholder="Ej: 1001" required>
+    <label>Contraseña SIP:</label>
+    <input type="password" id="password" required>
+    <button type="submit">Registrar cuenta</button>
+  </form>
+
+  <div id="status"></div>
+
+  <!-- 🔹 Aquí empieza el módulo JS -->
+  <script type="module">
+    import * as SIP from "https://unpkg.com/sip.js@0.21.0/dist/sip.js";
+
+    const form = document.getElementById("sipForm");
+    const statusEl = document.getElementById("status");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const user = document.getElementById("user").value;
+      const password = document.getElementById("password").value;
+      const domain = "anura.empresas.anura.pe:55090";
+      const wssServer = "wss://sipwss.anura.pe";
+
+      statusEl.textContent = "Conectando al servidor Anura...";
+
+      try {
+        const uri = `sip:${user}@${domain}`;
+
+        const userAgent = new SIP.UserAgent({
+          uri,
+          authorizationUsername: user,
+          authorizationPassword: password,
+          transportOptions: { server: wssServer },
+          userAgentString: "Anura-WebClient/1.0"
+        });
+
+        await userAgent.start();
+
+        const registerer = new SIP.Registerer(userAgent);
+        await registerer.register();
+
+        statusEl.textContent = "✅ Registro exitoso en Anura PBX";
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = "❌ Error al registrar: " + err.message;
+      }
+    });
+  </script>
+  <!-- 🔹 Aquí termina el módulo JS -->
+</body>
+</html>
