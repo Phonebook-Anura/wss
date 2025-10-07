@@ -170,7 +170,7 @@
       statusEl.textContent = '⏳ intentando registrar...';
       try {
         const res = await registerSIP(user, password, {
-          domain: 'anura.empresas.anura.pe',
+          domain: 'anura.empresas.anura.pe:55090',
           wss: 'wss://sipwss.anura.pe',
           timeout: 20000
         });
